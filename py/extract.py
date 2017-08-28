@@ -4,7 +4,7 @@
 import sys
 import os
 import os.path
-
+import json
 
 
 def utf82gbk(dir, fileName, outDir):
@@ -16,30 +16,34 @@ def utf82gbk(dir, fileName, outDir):
 	outputName = realOutDir + "\\" + fileName
 	file_object = open(fullName, encoding='UTF-8')
 	outputFile = open(outputName, mode='w', encoding='GBK')
+	head = "排名,玩家Id,区服Id,玩家名字,情侣Id,情侣区服Id,情侣名字,分数\n" 
+	outputFile.write(head)
 	try:
 		i = 0
-		playerId = 0
+		playerId = ""
 		playerName = ""
-		ranking = 0
-		score = 0
+		ranking = ""
+		score = ""
+		temp = ""
 		while True:
-		    line = file_object.readline()
-		    if line:
-		    	line.strip()
-		    	if line[0] == '{':
-		    		i = i + 1
-		    	elif line[3] == 'n':
-		    		ranking = line[19:]
-		    	elif line[1] == 'p' and line[7] == 'I':
-		    		playerId = line[20:]
-		    	elif line[1] == 'p' and line[7] == 'N':
-		    		playerName = line[13:]
-		    	elif line[1] == 's':
-		    		score = line[17:]
-		    	elif line[0] == '}':
-		    		outputFile.write(ranking + "," + playerId + "," + playerName + "," + score + "\n")
-		    else:
-		        break
+			line = file_object.readline()
+			if line:
+				line = line.strip().strip('\n').strip('\r')
+				line = line.replace("ObjectId", "")
+				line = line.replace("NumberInt", "")
+				line = line.replace("(", "")
+				line = line.replace(")", "")
+				temp += line
+				if line[0] == '}':
+					i += 1
+					if i % 2 == 0:
+						obj = json.loads(temp)
+						#print(obj)
+						temp = ""
+						output_line = "%d,%d,0,%s,%d,0,%s,%d\n" % (obj["ranking"], obj["role_id"], obj["extra"]["playerName"], obj["extra"]["fereId"], obj["extra"]["fereName"], obj["score"])
+						outputFile.write(output_line)
+			else:
+				break
 	finally:
 		file_object.close()
 		outputFile.close()
@@ -48,6 +52,5 @@ def transInDir(dirName, outDir):
 	for parent, dirnames, filenames in os.walk(dirName):    
 		for fileName in filenames:                      
 			utf82gbk(parent, fileName, outDir)
-
 
 transInDir(sys.argv[1], sys.argv[2])
