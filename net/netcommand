@@ -1,0 +1,5 @@
+sudo tcpdump host 23.105.218.162
+
+telnet host port
+
+netstat -apn
